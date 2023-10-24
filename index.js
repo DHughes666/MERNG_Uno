@@ -12,7 +12,7 @@ const {
 
 const app = express();
 
-const UsersList = [
+let UsersList = [
     {id: '1', name: 'John', email: 'john@example.com'},
     {id: '2', name: 'Michael', email: 'michael@example.com'},
     {id: '3', name: 'Bose', email: 'bose@example'},
@@ -38,10 +38,60 @@ const RootQuery = new GraphQLObjectType({
             },
             
         },
+        //to get user by id
+        user: {
+            type: UserType,
+            args: {id: {type: GraphQLID } },
+            resolve(parent, args) {
+                return UsersList.find((user) => user.id === args.id);
+            }
+        }
     },
 });
 
-const schema = new GraphQLSchema({ query: RootQuery });
+const mutations = new GraphQLObjectType({
+    name: "mutations",
+    fields: {
+        // adding a user
+        addUser: {
+            type: UserType,
+            args: {name: {type: GraphQLString}, email: {type: GraphQLString}},
+            resolve(parent, {name, email}) {
+                const newUser = {name, email, id:Date.now().toString()};
+                UsersList.push(newUser);
+                return newUser;
+            }
+        },
+
+        updateUser: {
+            type: UserType,
+            args: {id: {type: GraphQLID}, 
+            name: {type: GraphQLString}, 
+            email: {type: GraphQLString}},
+            resolve(parent, {id, name, email}) {
+                const user = UsersList.find((user) => user.id === id);
+                user.email = email;
+                user.name = name;
+                return user;
+            },
+        },
+
+        deleteUser: {
+            type: UserType,
+            args: {
+                id: {type: GraphQLID },
+            },
+            resolve(parent, {id}) {
+                const user = UsersList.find((u) => u.id === id);
+                UsersList = UsersList.filter((u)=> u.id !== id);
+                return user;
+            }
+        }
+
+    }
+})
+
+const schema = new GraphQLSchema({ query: RootQuery, mutation: mutations });
 
 app.use("/graphql", graphqlHTTP({schema, graphiql: true}));
 
