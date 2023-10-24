@@ -34,5 +34,32 @@ const RootQuery = new graphql_1.GraphQLObjectType({
         },
     }
 });
+const mutations = new graphql_1.GraphQLObjectType({
+    name: 'mutations',
+    fields: {
+        // user Signup
+        signup: {
+            type: schema_1.UserType,
+            args: {
+                name: { type: (0, graphql_1.GraphQLNonNull)(graphql_1.GraphQLString) },
+                email: { type: (0, graphql_1.GraphQLNonNull)(graphql_1.GraphQLString) },
+                password: { type: (0, graphql_1.GraphQLNonNull)(graphql_1.GraphQLString) },
+            },
+            async resolve(parent, { name, email, password }) {
+                let existingUser;
+                try {
+                    existingUser = await Users_1.default.findOne({ email });
+                    if (existingUser)
+                        return new Error("User already exist");
+                    const user = new Users_1.default({ name, email, password });
+                    return await user.save();
+                }
+                catch (e) {
+                    return new Error("User Signup Failed. Try again");
+                }
+            }
+        }
+    }
+});
 exports.default = new graphql_1.GraphQLSchema({ query: RootQuery });
 //# sourceMappingURL=handlers.js.map
